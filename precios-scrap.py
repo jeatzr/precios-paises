@@ -28,22 +28,26 @@ print(countries_list)
 
 # recorremos la lista de URL de países
 for country in countries_list:
+
     web_restaurants = requests.get(
         country['url']+"precio-restaurantes").content
     soup_restaurants = BeautifulSoup(web_restaurants, "html.parser")
     rows = soup_restaurants.find("table").find_all("tr")
 
-    aside_lis = soup_restaurants.css.select(".container aside li")
+    aside_lis = soup_restaurants.select(".container aside li")
     print(aside_lis[1])
     salary_text = aside_lis[1].getText()
-    m1 = re.match('Salario', salary_text)
-    m2 = re.match(r'(\D+)(\d+)\.?(\d+)\,?(\d+)', salary_text)
-    print(salary_text)
-    print(m1)
-    if m1:
-        print('Group 2: ' + m2.group(2))
-        print('Group 3: ' + m2.group(3))
-        print('Group 4: ' + m2.group(4))
+
+    # Extraemos el salario medio
+    print(country['name'])
+    expRegularSalarioMedio = r'\d{1,3}(?:[.,]\d{3})*(?:,\d+)'
+    resultado = re.search(expRegularSalarioMedio, salary_text)
+    if resultado:
+        valor = resultado.group()
+        print(valor)
+    else:
+        valor = "null"
+        print(valor)
 
     # si solo hay tres columas el precio viene solo en Dólar y Euro
     # por lo que el precio en dólar esta en la columna 1
@@ -61,6 +65,5 @@ for country in countries_list:
         bigmac_price = "null"
 
     print(country['name'] + "-------------------")
-    print("Bigmac menu price: " + bigmac_price)
     print("Beer price: " + beer_price)
-    time.sleep(5)
+    time.sleep(1.5)
