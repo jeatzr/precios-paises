@@ -2,9 +2,12 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import time
+import re
+
 
 URL_BASE = 'https://preciosmundi.com/'
-continentes = ['europa', 'america', 'asia', 'africa', 'oceania']
+continentes = ['europa']
+# continentes = ['europa', 'america', 'asia', 'africa', 'oceania']
 countries_list = []
 
 # buscamos en la página de cada continente los links
@@ -13,7 +16,7 @@ countries_list = []
 for continente in continentes:
     web_indice = requests.get(URL_BASE + continente).content
     soup_indice = BeautifulSoup(web_indice, "html.parser")
-    links = soup_indice.css.select('.countries a')
+    links = soup_indice.select('.countries a')
     for link_country in links:
         url_country = link_country['href']
         name_country = link_country.text
@@ -30,6 +33,18 @@ for country in countries_list:
     soup_restaurants = BeautifulSoup(web_restaurants, "html.parser")
     rows = soup_restaurants.find("table").find_all("tr")
 
+    aside_lis = soup_restaurants.css.select(".container aside li")
+    print(aside_lis[1])
+    salary_text = aside_lis[1].getText()
+    m1 = re.match('Salario', salary_text)
+    m2 = re.match(r'(\D+)(\d+)\.?(\d+)\,?(\d+)', salary_text)
+    print(salary_text)
+    print(m1)
+    if m1:
+        print('Group 2: ' + m2.group(2))
+        print('Group 3: ' + m2.group(3))
+        print('Group 4: ' + m2.group(4))
+
     # si solo hay tres columas el precio viene solo en Dólar y Euro
     # por lo que el precio en dólar esta en la columna 1
     if len(rows[0].find_all("td")) == 3:
@@ -38,10 +53,14 @@ for country in countries_list:
     else:
         i_dolar = 2
 
-    beer_price = rows[5].find_all("td")[i_dolar].find(string=True)
-    bigmac_price = rows[6].find_all("td")[i_dolar].find(string=True)
+    if len(rows) > 1:
+        beer_price = rows[5].find_all("td")[i_dolar].find(string=True)
+        bigmac_price = rows[6].find_all("td")[i_dolar].find(string=True)
+    else:
+        beer_price = "null"
+        bigmac_price = "null"
 
-    print(country['name'])
+    print(country['name'] + "-------------------")
     print("Bigmac menu price: " + bigmac_price)
     print("Beer price: " + beer_price)
     time.sleep(5)
