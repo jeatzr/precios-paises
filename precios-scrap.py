@@ -4,6 +4,19 @@ from bs4 import BeautifulSoup
 import time
 import re
 
+def to_csv(listaPaises, salariosMedios, preciosCerveza, preciosBigMac, nombre_archivo):
+    # Crear un diccionario con los datos
+    data = {'Pais': listaPaises,
+            'Salario Medio': salariosMedios,
+            'Cerveza': preciosCerveza,
+            'Big Mac': preciosBigMac}
+
+    # Crear un DataFrame a partir del diccionario
+    dataFrame = pd.DataFrame(data)
+
+    # Escribir la información del DataFrame en un archivo csv
+    dataFrame.to_csv(nombre_archivo, index=False)
+
 
 URL_BASE = 'https://preciosmundi.com/'
 continentes = ['europa']
@@ -79,12 +92,4 @@ for country in countries_list:
     print("Beer price: " + beer_price)
     time.sleep(1)
 
-# Pasar la información a un dataFrame
-data = {'Pais': listaPaises,
-        'Salario Medio': salariosMedios,
-        'Cerveza': preciosCerveza,
-        'Big Mac': preciosBigMac}
-dataFrame = pd.DataFrame(data)
-
-# Escribir la información del dataFrame en un archivo csv
-dataFrame.to_csv('precios.csv', index=False)
+to_csv(listaPaises, salariosMedios, preciosCerveza, preciosBigMac, 'precios.csv')
