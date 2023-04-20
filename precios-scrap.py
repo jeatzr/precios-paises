@@ -17,6 +17,23 @@ def to_csv(listaPaises, salariosMedios, preciosCerveza, preciosBigMac, nombre_ar
     # Escribir la información del DataFrame en un archivo csv
     dataFrame.to_csv(nombre_archivo, index=False)
 
+def getSalaries(soup_restaurants):
+    aside_lis = soup_restaurants.select(".container aside li")
+    print(aside_lis[1])
+    salary_text = aside_lis[1].getText()
+
+    # Extraemos el salario medio
+    expRegularSalarioMedio = r'\d{1,3}(?:[.,]\d{3})*(?:,\d+)'
+    resultado = re.search(expRegularSalarioMedio, salary_text)
+    if resultado:
+        valor = resultado.group()
+        print(valor)
+    else:
+        valor = "null"
+        print(valor)
+    
+    return valor
+
 
 URL_BASE = 'https://preciosmundi.com/'
 continentes = ['europa']
@@ -53,23 +70,10 @@ for country in countries_list:
     soup_restaurants = BeautifulSoup(web_restaurants, "html.parser")
     rows = soup_restaurants.find("table").find_all("tr")
 
-    aside_lis = soup_restaurants.select(".container aside li")
-    print(aside_lis[1])
-    salary_text = aside_lis[1].getText()
-
-    listaPaises.append(country['name']);
-    # Extraemos el salario medio
     print(country['name'])
-    expRegularSalarioMedio = r'\d{1,3}(?:[.,]\d{3})*(?:,\d+)'
-    resultado = re.search(expRegularSalarioMedio, salary_text)
-    if resultado:
-        valor = resultado.group()
-        print(valor)
-    else:
-        valor = "null"
-        print(valor)
-    salariosMedios.append(valor)
-
+    listaPaises.append(country['name'])
+    salariosMedios.append(getSalaries(soup_restaurants))
+    
     # si solo hay tres columas el precio viene solo en Dólar y Euro
     # por lo que el precio en dólar esta en la columna 1
     if len(rows[0].find_all("td")) == 3:
