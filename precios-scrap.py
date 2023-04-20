@@ -17,6 +17,22 @@ def to_csv(listaPaises, salariosMedios, preciosCerveza, preciosBigMac, nombre_ar
     # Escribir la información del DataFrame en un archivo csv
     dataFrame.to_csv(nombre_archivo, index=False)
 
+# buscamos en la página de cada continente los links
+# base de todos los países que guardaremos en countries_list
+def getCountriesList(continentes, URL_BASE):
+    auxCountries = []
+    for continente in continentes:
+        web_indice = requests.get(URL_BASE + continente).content
+        soup_indice = BeautifulSoup(web_indice, "html.parser")
+        links = soup_indice.select('.countries a')
+        for link_country in links:
+            url_country = link_country['href']
+            name_country = link_country.text
+            print(name_country)
+            auxCountries.append({'url': url_country, 'name': name_country})
+    time.sleep(1)
+    return auxCountries
+
 def getSalaries(soup_restaurants):
     aside_lis = soup_restaurants.select(".container aside li")
     print(aside_lis[1])
@@ -38,22 +54,8 @@ def getSalaries(soup_restaurants):
 URL_BASE = 'https://preciosmundi.com/'
 continentes = ['europa']
 # continentes = ['europa', 'america', 'asia', 'africa', 'oceania']
-countries_list = []
 
-# buscamos en la página de cada continente los links
-# base de todos los países que guardaremos en countries_list
-
-for continente in continentes:
-    web_indice = requests.get(URL_BASE + continente).content
-    soup_indice = BeautifulSoup(web_indice, "html.parser")
-    links = soup_indice.select('.countries a')
-    for link_country in links:
-        url_country = link_country['href']
-        name_country = link_country.text
-        print(name_country)
-        countries_list.append({'url': url_country, 'name': name_country})
-    time.sleep(5)
-
+countries_list = getCountriesList(continentes,URL_BASE )
 print(countries_list)
 
 # Declaramos los vectores que poblaremos con datos con los que alimentar el dataFrame
