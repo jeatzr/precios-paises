@@ -26,7 +26,13 @@ for continente in continentes:
 
 print(countries_list)
 
-# recorremos la lista de URL de países
+# Declaramos los vectores que poblaremos con datos con los que alimentar el dataFrame
+listaPaises = []
+salariosMedios = []
+preciosCerveza = []
+preciosBigMac = []
+
+# recorremos la lista de URL de países 
 for country in countries_list:
 
     web_restaurants = requests.get(
@@ -38,6 +44,7 @@ for country in countries_list:
     print(aside_lis[1])
     salary_text = aside_lis[1].getText()
 
+    listaPaises.append(country['name']);
     # Extraemos el salario medio
     print(country['name'])
     expRegularSalarioMedio = r'\d{1,3}(?:[.,]\d{3})*(?:,\d+)'
@@ -48,6 +55,7 @@ for country in countries_list:
     else:
         valor = "null"
         print(valor)
+    salariosMedios.append(valor)
 
     # si solo hay tres columas el precio viene solo en Dólar y Euro
     # por lo que el precio en dólar esta en la columna 1
@@ -64,6 +72,19 @@ for country in countries_list:
         beer_price = "null"
         bigmac_price = "null"
 
+    preciosCerveza.append(beer_price)
+    preciosBigMac.append(bigmac_price)  
+
     print(country['name'] + "-------------------")
     print("Beer price: " + beer_price)
-    time.sleep(1.5)
+    time.sleep(1)
+
+# Pasar la información a un dataFrame
+data = {'Pais': listaPaises,
+        'Salario Medio': salariosMedios,
+        'Cerveza': preciosCerveza,
+        'Big Mac': preciosBigMac}
+dataFrame = pd.DataFrame(data)
+
+# Escribir la información del dataFrame en un archivo csv
+dataFrame.to_csv('precios.csv', index=False)
