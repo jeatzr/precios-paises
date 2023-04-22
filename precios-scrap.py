@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import re
+import datetime
 
 def to_csv(listaPaises, salariosMedios, preciosCerveza, preciosBigMac, nombre_archivo):
     # Crear un diccionario con los datos
@@ -98,4 +99,7 @@ for country in countries_list:
     print("Beer price: " + beer_price)
     time.sleep(1)
 
-to_csv(listaPaises, salariosMedios, preciosCerveza, preciosBigMac, 'precios.csv')
+fecha_actual = datetime.date.today()
+nombre_archivo = f"precios_{fecha_actual}.csv"
+
+to_csv(listaPaises, salariosMedios, preciosCerveza, preciosBigMac, nombre_archivo)
