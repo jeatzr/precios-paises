@@ -6,28 +6,51 @@ import re
 import datetime
 import os
 
-def get_bille_transporte(country, i_dolar):
+
+def get_precios_transporte(country, i_col):
+    '''
+      Esta Función nos devuelve el precio de un billete de transporte
+      el precio de inicio de taxi y el precio de 1Km de Taxi para un país
+      dado y un índice de columna dado 
+      Ej invocación:
+      precioBillete, inicioTaxi, taxi1Km = get_precios_transporte(
+        country, i_dolar)
+    '''
     web_services = requests.get(
         country['url']+"precio-transporte-servicios").content
     soup_services = BeautifulSoup(web_services, "html.parser")
     rows = soup_services.find("table").find_all("tr")
 
+    # En caso de que haya más de una fila leemos los precios
     if len(rows) > 1:
-        precioBillete = rows[4].find_all("td")[i_dolar].find(string=True)
+        precioBillete = rows[7].find_all("td")[i_col].find(string=True)
+        inicioTaxi = rows[5].find_all("td")[i_col].find(string=True)
+        taxi1Km = rows[4].find_all("td")[i_col].find(string=True)
+    # En caso contrario los precios tendrían valor "null"
     else:
         precioBillete = "null"
+        inicioTaxi = "null"
+        taxi1Km = "null"
 
     print("Public transport ticket price: " + precioBillete)
-    return precioBillete
+    return precioBillete, inicioTaxi, taxi1Km
 
-def to_csv(listaPaises, salariosMedios, preciosCola, preciosCerveza, preciosBigMac, preciosBillete, nombre_archivo):
+
+def to_csv(listaPaises, salariosMedios, preciosCola, preciosCerveza, preciosBigMac, preciosBillete,
+           precios1KmTaxi, preciosInicioTaxi, nombre_archivo):
+    '''
+      Esta función crea un dataframe a partir de las listas de precios pasadas como
+      parámetro y lo exporta a un fichero CSV pasado por parámetro
+    '''
     # Crear un diccionario con los datos
     data = {'Pais': listaPaises,
             'Salario Medio': salariosMedios,
             'Refresco': preciosCola,
             'Cerveza': preciosCerveza,
             'Big Mac': preciosBigMac,
-            'Billete transporte': preciosBillete
+            'Billete transporte': preciosBillete,
+            'Inicio Taxi': preciosInicioTaxi,
+            'Taxi 1Km': precios1KmTaxi
             }
 
     # Crear un DataFrame a partir del diccionario
@@ -41,6 +64,11 @@ def to_csv(listaPaises, salariosMedios, preciosCola, preciosCerveza, preciosBigM
 
 
 def getCountriesList(continentes, URL_BASE):
+    '''
+      Esta función devuelve el listado de países completo 
+      de una lista de continentes dada y la URL_BASE del sitio web.
+      Devuelve una lista de países.
+    '''
     auxCountries = []
     for continente in continentes:
         web_indice = requests.get(URL_BASE + continente).content
@@ -56,6 +84,11 @@ def getCountriesList(continentes, URL_BASE):
 
 
 def getSalaries(soup_restaurants):
+    '''
+      Esta función extrae de un objeto soup de BS4 (con estructura 
+      de página de restaurantes de nuestro sitio web) el salario 
+      medio para el país de esa página, devolviéndolo finalmente.  
+    '''
     aside_lis = soup_restaurants.select(".container aside li")
     # print(aside_lis[1])
     salary_text = aside_lis[1].getText()
@@ -87,6 +120,8 @@ preciosCerveza = []
 preciosBigMac = []
 preciosBillete = []
 preciosCola = []
+preciosInicioTaxi = []
+precios1KmTaxi = []
 
 
 # recorremos la lista de URL de países
@@ -102,17 +137,18 @@ for country in countries_list:
     salariosMedios.append(getSalaries(soup_restaurants))
 
     # si solo hay tres columas el precio viene solo en Dólar y Euro
-    # por lo que el precio en dólar esta en la columna 1
-    if len(rows[0].find_all("td")) == 3:
-        i_dolar = 1
-    # en caso contraro suponemos que el precio en dólar está en columna 2
+    # por lo que el precio en euros esta en la columna 2
+
+    if len(rows[0].find_all("th")) == 3:
+        i_euro = 2
+    # en caso contrario suponemos que el precio en euros está en columna 3
     else:
-        i_dolar = 2
+        i_euro = 3
 
     if len(rows) > 1:
-        cola_price = rows[2].find_all("td")[i_dolar].find(string=True)
-        beer_price = rows[5].find_all("td")[i_dolar].find(string=True)
-        bigmac_price = rows[6].find_all("td")[i_dolar].find(string=True)
+        cola_price = rows[2].find_all("td")[i_euro].find(string=True)
+        beer_price = rows[5].find_all("td")[i_euro].find(string=True)
+        bigmac_price = rows[6].find_all("td")[i_euro].find(string=True)
     else:
         cola_price = "null"
         beer_price = "null"
@@ -127,8 +163,12 @@ for country in countries_list:
     time.sleep(1)
 
     # Obtenemos y almacenamos el precio de un billete de ida en transporte público
-    precioBillete = get_bille_transporte(country, i_dolar)
+    # el precio inicial de un taxi y el precio por Km de un taxi
+    precioBillete, inicioTaxi, taxi1Km = get_precios_transporte(
+        country, i_euro)
     preciosBillete.append(precioBillete)
+    precios1KmTaxi.append(taxi1Km)
+    preciosInicioTaxi.append(inicioTaxi)
     time.sleep(1)
 
 fecha_actual = datetime.date.today()
@@ -141,4 +181,4 @@ if not os.path.exists(dataset_path):
 nombre_archivo = os.path.join(dataset_path, f"precios_{fecha_actual}.csv")
 
 to_csv(listaPaises, salariosMedios, preciosCola, preciosCerveza,
-       preciosBigMac, preciosBillete, nombre_archivo)
+       preciosBigMac, preciosBillete, precios1KmTaxi, preciosInicioTaxi, nombre_archivo)
