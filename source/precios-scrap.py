@@ -11,7 +11,7 @@ def get_precios_transporte(country, i_col):
     '''
       Esta Función nos devuelve el precio de un billete de transporte
       el precio de inicio de taxi y el precio de 1Km de Taxi para un país
-      dado y un índice de columna dado 
+      dado y un índice de columna dado
       Ej invocación:
       precioBillete, inicioTaxi, taxi1Km = get_precios_transporte(
         country, i_dolar)
@@ -21,31 +21,22 @@ def get_precios_transporte(country, i_col):
     soup_services = BeautifulSoup(web_services, "html.parser")
     rows = soup_services.find("table").find_all("tr")
 
-    # En caso de que haya más de una fila leemos los precios
-    if len(rows) > 1:
-        # La posición del precio del billete de transporte público se corresponde con la última fila
-        if len(rows) < 8:  
-            precioBillete = rows[len(rows)-1].find_all("td")[i_col].find(string=True)
-        else :
-            precioBillete = rows[7].find_all("td")[i_col].find(string=True)
-        # Comprobamos si hay una datos para el precio del inicio de una carrera en taxi
-        if len(rows) >= 6:
-            inicioTaxi = rows[5].find_all("td")[i_col].find(string=True)
-        else :
-            inicioTaxi = "null"
-        taxi1Km = rows[4].find_all("td")[i_col].find(string=True)
-    # En caso contrario los precios tendrían valor "null"
-    else:
-        precioBillete = "null"
-        inicioTaxi = "null"
-        taxi1Km = "null"
+    # i_taxi1h = getIndexOf('Taxi 1km (tarifa normal)', rows)
+    # i_inicio_taxi = getIndexOf('Inicio taxi (tarifa normal)', rows)
+
+    precioBillete = getPriceOf(
+        'Un billete de ida en transporte público', rows, i_col)
+    inicioTaxi = getPriceOf(
+        'Inicio taxi (tarifa normal)', rows, i_col)
+    taxi1Km = getPriceOf(
+        'Taxi 1km (tarifa normal)', rows, i_col)
 
     print("Public transport ticket price: " + precioBillete)
     return precioBillete, inicioTaxi, taxi1Km
 
 
 def to_csv(listaPaises, salariosMedios, preciosCola, preciosCerveza, preciosBigMac, preciosBillete,
-           precios1KmTaxi, preciosInicioTaxi, nombre_archivo):
+           precios1KmTaxi, preciosInicioTaxi, preciosCapuccino, preciosMenuDelDia, nombre_archivo):
     '''
       Esta función crea un dataframe a partir de las listas de precios pasadas como
       parámetro y lo exporta a un fichero CSV pasado por parámetro
@@ -54,8 +45,10 @@ def to_csv(listaPaises, salariosMedios, preciosCola, preciosCerveza, preciosBigM
     data = {'Pais': listaPaises,
             'Salario Medio': salariosMedios,
             'Refresco': preciosCola,
+            'Capuccino': preciosCapuccino,
             'Cerveza': preciosCerveza,
-            'Big Mac': preciosBigMac,
+            'Menú Big Mac': preciosBigMac,
+            'Menú del día': preciosMenuDelDia,
             'Billete transporte': preciosBillete,
             'Inicio Taxi': preciosInicioTaxi,
             'Taxi 1Km': precios1KmTaxi
@@ -73,7 +66,7 @@ def to_csv(listaPaises, salariosMedios, preciosCola, preciosCerveza, preciosBigM
 
 def getCountriesList(continentes, URL_BASE):
     '''
-      Esta función devuelve el listado de países completo 
+      Esta función devuelve el listado de países completo
       de una lista de continentes dada y la URL_BASE del sitio web.
       Devuelve una lista de países.
     '''
@@ -91,11 +84,27 @@ def getCountriesList(continentes, URL_BASE):
     return auxCountries
 
 
+def getPriceOf(priceDefinition, rows, i_col):
+    '''
+      Devuelve el valor del precio dado por:
+      priceDefinition: Definición del precio tal cual sale en preciosmundi
+      rows: lista de elementos <tr> de la tabla
+      i_col: índice de la columna para el precio
+    '''
+    value = "null"
+    for row in rows:
+        tds = row.find_all("td")
+        if tds:
+            if tds[0].find(string=True) == priceDefinition:
+                value = tds[i_col].find(string=True)
+    return value
+
+
 def getSalaries(soup_restaurants):
     '''
-      Esta función extrae de un objeto soup de BS4 (con estructura 
-      de página de restaurantes de nuestro sitio web) el salario 
-      medio para el país de esa página, devolviéndolo finalmente.  
+      Esta función extrae de un objeto soup de BS4 (con estructura
+      de página de restaurantes de nuestro sitio web) el salario
+      medio para el país de esa página, devolviéndolo finalmente.
     '''
     aside_lis = soup_restaurants.select(".container aside li")
     # print(aside_lis[1])
@@ -115,8 +124,7 @@ def getSalaries(soup_restaurants):
 
 
 URL_BASE = 'https://preciosmundi.com/'
-continentes = ['europa']
-# continentes = ['europa', 'america', 'asia', 'africa', 'oceania']
+continentes = ['europa', 'america', 'asia', 'africa', 'oceania']
 
 countries_list = getCountriesList(continentes, URL_BASE)
 print(countries_list)
@@ -130,6 +138,8 @@ preciosBillete = []
 preciosCola = []
 preciosInicioTaxi = []
 precios1KmTaxi = []
+preciosMenuDelDia = []
+preciosCapuccino = []
 
 
 # recorremos la lista de URL de países
@@ -146,25 +156,28 @@ for country in countries_list:
 
     # si solo hay tres columas el precio viene solo en Dólar y Euro
     # por lo que el precio en euros esta en la columna 2
-
     if len(rows[0].find_all("th")) == 3:
         i_euro = 2
-    # en caso contrario suponemos que el precio en euros está en columna 3
+    # en caso contrario suponemos que hay una columna más de precios
+    # para el precio en moneda loca, por lo que
+    # el precio en euros está en columna 3
     else:
         i_euro = 3
 
-    if len(rows) > 1:
-        cola_price = rows[2].find_all("td")[i_euro].find(string=True)
-        beer_price = rows[5].find_all("td")[i_euro].find(string=True)
-        bigmac_price = rows[6].find_all("td")[i_euro].find(string=True)
-    else:
-        cola_price = "null"
-        beer_price = "null"
-        bigmac_price = "null"
+    cola_price = getPriceOf(
+        'Coca-Cola / Pepsi (botella de 33cl) ', rows, i_euro)
+    beer_price = getPriceOf('Cerveza nacional (0,5 litros) ', rows, i_euro)
+    bigmac_price = getPriceOf(
+        'Menú de McDonalds, Burger King o similar', rows, i_euro)
+    capuccino_price = getPriceOf('Café Cappuccino ', rows, i_euro)
+    menudia_price = getPriceOf(
+        'Comida en un restaurante barato (menú del día)', rows, i_euro)
 
     preciosCola.append(cola_price)
     preciosCerveza.append(beer_price)
     preciosBigMac.append(bigmac_price)
+    preciosCapuccino.append(capuccino_price)
+    preciosMenuDelDia.append(menudia_price)
 
     print(country['name'] + "-------------------")
     print("Beer price: " + beer_price)
@@ -189,4 +202,5 @@ if not os.path.exists(dataset_path):
 nombre_archivo = os.path.join(dataset_path, f"precios_{fecha_actual}.csv")
 
 to_csv(listaPaises, salariosMedios, preciosCola, preciosCerveza,
-       preciosBigMac, preciosBillete, precios1KmTaxi, preciosInicioTaxi, nombre_archivo)
+       preciosBigMac, preciosBillete, precios1KmTaxi, preciosInicioTaxi,
+       preciosCapuccino, preciosMenuDelDia, nombre_archivo)
