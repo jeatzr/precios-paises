@@ -23,8 +23,16 @@ def get_precios_transporte(country, i_col):
 
     # En caso de que haya más de una fila leemos los precios
     if len(rows) > 1:
-        precioBillete = rows[7].find_all("td")[i_col].find(string=True)
-        inicioTaxi = rows[5].find_all("td")[i_col].find(string=True)
+        # La posición del precio del billete de transporte público se corresponde con la última fila
+        if len(rows) < 8:  
+            precioBillete = rows[len(rows)-1].find_all("td")[i_col].find(string=True)
+        else :
+            precioBillete = rows[7].find_all("td")[i_col].find(string=True)
+        # Comprobamos si hay una datos para el precio del inicio de una carrera en taxi
+        if len(rows) >= 6:
+            inicioTaxi = rows[5].find_all("td")[i_col].find(string=True)
+        else :
+            inicioTaxi = "null"
         taxi1Km = rows[4].find_all("td")[i_col].find(string=True)
     # En caso contrario los precios tendrían valor "null"
     else:
