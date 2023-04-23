@@ -4,12 +4,13 @@ from bs4 import BeautifulSoup
 import time
 import re
 import datetime
+import os
 
-
-def to_csv(listaPaises, salariosMedios, preciosCerveza, preciosBigMac, preciosBillete, nombre_archivo):
+def to_csv(listaPaises, salariosMedios, preciosCola, preciosCerveza, preciosBigMac, preciosBillete, nombre_archivo):
     # Crear un diccionario con los datos
     data = {'Pais': listaPaises,
             'Salario Medio': salariosMedios,
+            'Refresco': preciosCola,
             'Cerveza': preciosCerveza,
             'Big Mac': preciosBigMac,
             'Billete transporte': preciosBillete
@@ -71,6 +72,7 @@ salariosMedios = []
 preciosCerveza = []
 preciosBigMac = []
 preciosBillete = []
+preciosCola = []
 
 
 # recorremos la lista de URL de países
@@ -94,12 +96,15 @@ for country in countries_list:
         i_dolar = 2
 
     if len(rows) > 1:
+        cola_price = rows[2].find_all("td")[i_dolar].find(string=True)
         beer_price = rows[5].find_all("td")[i_dolar].find(string=True)
         bigmac_price = rows[6].find_all("td")[i_dolar].find(string=True)
     else:
+        cola_price = "null"
         beer_price = "null"
         bigmac_price = "null"
 
+    preciosCola.append(cola_price)
     preciosCerveza.append(beer_price)
     preciosBigMac.append(bigmac_price)
 
@@ -123,7 +128,13 @@ for country in countries_list:
 
 
 fecha_actual = datetime.date.today()
-nombre_archivo = f"../dataset/precios_{fecha_actual}.csv"
 
-to_csv(listaPaises, salariosMedios, preciosCerveza,
+# Comprobamos que existe el directorio dataset en la carpeta de destino y si no lo creamos
+dataset_path = os.path.join(os.path.dirname(__file__), '..', 'dataset')
+if not os.path.exists(dataset_path):
+    os.makedirs(dataset_path)
+
+nombre_archivo = os.path.join(dataset_path, f"precios_{fecha_actual}.csv")
+
+to_csv(listaPaises, salariosMedios, preciosCola, preciosCerveza,
        preciosBigMac, preciosBillete, nombre_archivo)
