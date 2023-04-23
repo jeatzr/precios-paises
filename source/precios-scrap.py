@@ -6,6 +6,20 @@ import re
 import datetime
 import os
 
+def get_bille_transporte(country, i_dolar):
+    web_services = requests.get(
+        country['url']+"precio-transporte-servicios").content
+    soup_services = BeautifulSoup(web_services, "html.parser")
+    rows = soup_services.find("table").find_all("tr")
+
+    if len(rows) > 1:
+        precioBillete = rows[4].find_all("td")[i_dolar].find(string=True)
+    else:
+        precioBillete = "null"
+
+    print("Public transport ticket price: " + precioBillete)
+    return precioBillete
+
 def to_csv(listaPaises, salariosMedios, preciosCola, preciosCerveza, preciosBigMac, preciosBillete, nombre_archivo):
     # Crear un diccionario con los datos
     data = {'Pais': listaPaises,
@@ -112,20 +126,10 @@ for country in countries_list:
     print("Beer price: " + beer_price)
     time.sleep(1)
 
-    web_services = requests.get(
-        country['url']+"precio-transporte-servicios").content
-    soup_services = BeautifulSoup(web_services, "html.parser")
-    rows = soup_services.find("table").find_all("tr")
-
-    if len(rows) > 1:
-        precioBillete = rows[4].find_all("td")[i_dolar].find(string=True)
-    else:
-        precioBillete = "null"
-
-    print("Public transport ticket price: " + precioBillete)
+    # Obtenemos y almacenamos el precio de un billete de ida en transporte público
+    precioBillete = get_bille_transporte(country, i_dolar)
     preciosBillete.append(precioBillete)
     time.sleep(1)
-
 
 fecha_actual = datetime.date.today()
 
