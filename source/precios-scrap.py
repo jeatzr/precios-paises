@@ -35,7 +35,7 @@ def get_precios_transporte(country, i_col):
     return precioBillete, inicioTaxi, taxi1Km
 
 
-def to_csv(listaPaises, salariosMedios, preciosCola, preciosCerveza, preciosBigMac, preciosBillete,
+def to_csv(listaPaises, listaContinentes, salariosMedios, preciosCola, preciosCerveza, preciosBigMac, preciosBillete,
            precios1KmTaxi, preciosInicioTaxi, preciosCapuccino, preciosMenuDelDia, nombre_archivo):
     '''
       Esta función crea un dataframe a partir de las listas de precios pasadas como
@@ -43,6 +43,7 @@ def to_csv(listaPaises, salariosMedios, preciosCola, preciosCerveza, preciosBigM
     '''
     # Crear un diccionario con los datos
     data = {'Pais': listaPaises,
+            'Continente': listaContinentes,
             'Salario Medio': salariosMedios,
             'Refresco': preciosCola,
             'Capuccino': preciosCapuccino,
@@ -79,7 +80,7 @@ def getCountriesList(continentes, URL_BASE):
             url_country = link_country['href']
             name_country = link_country.text
             print(name_country)
-            auxCountries.append({'url': url_country, 'name': name_country})
+            auxCountries.append({'url': url_country, 'name': name_country, 'continente': continente})
     time.sleep(1)
     return auxCountries
 
@@ -131,6 +132,7 @@ print(countries_list)
 
 # Declaramos los vectores que poblaremos con datos con los que alimentar el dataFrame
 listaPaises = []
+listaContinentes = []
 salariosMedios = []
 preciosCerveza = []
 preciosBigMac = []
@@ -152,6 +154,7 @@ for country in countries_list:
 
     print(country['name'])
     listaPaises.append(country['name'])
+    listaContinentes.append(country['continente'])
     salariosMedios.append(getSalaries(soup_restaurants))
 
     # si solo hay tres columas el precio viene solo en Dólar y Euro
@@ -201,6 +204,6 @@ if not os.path.exists(dataset_path):
 
 nombre_archivo = os.path.join(dataset_path, f"precios_{fecha_actual}.csv")
 
-to_csv(listaPaises, salariosMedios, preciosCola, preciosCerveza,
+to_csv(listaPaises, listaContinentes, salariosMedios, preciosCola, preciosCerveza,
        preciosBigMac, preciosBillete, precios1KmTaxi, preciosInicioTaxi,
        preciosCapuccino, preciosMenuDelDia, nombre_archivo)
