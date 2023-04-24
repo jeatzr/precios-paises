@@ -141,6 +141,9 @@ countries_list = getCountriesList(continentes, URL_BASE)
 # print(countries_list)
 print("Obteniendo datos de https://preciosmundi.com/ ...")
 
+response = requests.get(URL_BASE)
+print("El usar agent usado es: "+response.request.headers['User-Agent'])
+
 # Declaramos las listas que poblaremos con datos con los que alimentar el dataFrame
 listaPaises = []
 listaContinentes = []
